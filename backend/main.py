@@ -22,7 +22,7 @@ async def handle_request(request: Request):
     output_contexts = payload['queryResult']['outputContexts']
     session_id = generic_helper.extract_session_id(output_contexts[0]["name"])
 
-    intent_handler_dict = {
+    intent_handler_dict = { # like a routing table using a dict instead of using a bunch of if statements 
         'order.add - context: ongoing-order': add_to_order,
         'order.remove - context: ongoing-order': remove_from_order,
         'order.complete - context: ongoing-order': complete_order,
@@ -31,6 +31,8 @@ async def handle_request(request: Request):
 
     return intent_handler_dict[intent](parameters, session_id)
 
+# when order is complete, insert to db 
+# if order is ongoing, there needs to be temp variables to store those (inprogress_orders)
 def save_to_db(order: dict):
     next_order_id = db_helper.get_next_order_id()
 
@@ -85,7 +87,7 @@ def add_to_order(parameters: dict, session_id: str):
         if session_id in inprogress_orders:
             current_food_dict = inprogress_orders[session_id]
             current_food_dict.update(new_food_dict)
-            inprogress_orders[session_id] = current_food_dict
+            inprogress_orders[session_id] = current_food_dict # to handle concurrency between chatbots and backend servers
         else:
             inprogress_orders[session_id] = new_food_dict
 
